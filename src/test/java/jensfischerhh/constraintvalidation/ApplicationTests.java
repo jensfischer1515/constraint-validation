@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,17 +44,17 @@ public class ApplicationTests {
         String name = "Name-Which-Is-Way-Too-Long";
 
         // WHEN
-        ConstraintViolationException cause = (ConstraintViolationException) catchThrowable(() ->
+        DataIntegrityViolationException exception = (DataIntegrityViolationException) catchThrowable(() ->
                 repository.saveAndFlush(new Person(name))
         );
-        cause.printStackTrace();
+        exception.printStackTrace();
 
         // THEN
-        then(cause.getConstraintViolations())
+        then(((ConstraintViolationException)exception.getCause()).getConstraintViolations())
                 .isNotEmpty()
                 .extracting(ConstraintViolation::getMessage)
                 .containsOnly("length must be between 1 and 20");
-        then(cause)
+        then(exception)
                 .hasMessageContaining("length must be between 1 and 20")
                 .describedAs("missing violation detail message");
     }
